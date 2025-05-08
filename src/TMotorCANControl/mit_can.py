@@ -543,7 +543,7 @@ class TMotorManager_mit_can():
     used in the context of a with as block, in order to safely enter/exit
     control of the motor.
     """
-    def __init__(self, motor_type='AK80-9', motor_ID=1, max_mosfett_temp=50, CSV_file=None, log_vars = LOG_VARIABLES):
+    def __init__(self, motor_type='AK80-9', motor_ID=1, max_mosfett_temp=80, CSV_file=None, log_vars = LOG_VARIABLES):
         """
         Sets up the motor manager. Note the device will not be powered on by this method! You must
         call __enter__, mostly commonly by using a with block, before attempting to control the motor.
@@ -1076,8 +1076,13 @@ class TMotorManager_mit_can():
     # Pretty stuff
     def __str__(self):
         """Prints the motor's device info and current"""
-        return self.device_info_string() + " | Position: " + '{: 1f}'.format(round(self.θ,3)) + " rad | Velocity: " + '{: 1f}'.format(round(self.θd,3)) + " rad/s | current: " + '{: 1f}'.format(round(self.i,3)) + " A | torque: " + '{: 1f}'.format(round(self.τ,3)) + " Nm"
-
+        return (
+            self.device_info_string() +
+            " | Position: {:.3f} rad".format(self.get_motor_angle_radians()) +
+            " | Velocity: {:.3f} rad/s".format(self.get_motor_velocity_radians_per_second()) +
+            " | Current: {:.3f} A".format(self.get_current_qaxis_amps()) +
+            " | Torque: {:.3f} Nm".format(self.get_motor_torque_newton_meters())
+        )
     def device_info_string(self):
         """Prints the motor's ID and device type."""
         return str(self.type) + "  ID: " + str(self.ID)
