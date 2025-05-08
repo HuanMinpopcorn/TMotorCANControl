@@ -699,7 +699,7 @@ class TMotorManager_mit_can():
         # check that the motor data is recent
         # print(self._command_sent)
         now = time.time()
-        if (now - self._last_command_time) < 0.25 and ( (now - self._last_update_time) > 0.1):
+        if (now - self._last_command_time) < 0.025 and ( (now - self._last_update_time) > 0.5):
             # print("State update requested but no data recieved from motor. Delay longer after zeroing, decrease frequency, or check connection.")
             warnings.warn("State update requested but no data from motor. Delay longer after zeroing, decrease frequency, or check connection. " + self.device_info_string(), RuntimeWarning)
         else:
