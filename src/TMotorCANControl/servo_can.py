@@ -410,6 +410,7 @@ class CAN_Manager_servo(object):
             duty: duty cycle (-1 to 1) to use
         """
         buffer=[]
+        send_index = 0
         self.buffer_append_int32(buffer, np.int32(duty * 100000.0))
         self.send_servo_message(controller_id|(Servo_Params['CAN_PACKET_ID']['CAN_PACKET_SET_DUTY'] << 8), buffer, send_index)
 
@@ -467,7 +468,7 @@ class CAN_Manager_servo(object):
         """
         send_index = 0
         buffer=[]
-        self.buffer_append_int32(buffer, np.int32(pos * 1000000.0), send_index)
+        self.buffer_append_int32(buffer, np.int32(pos * 1000000.0))
         self.send_servo_message(controller_id|(Servo_Params['CAN_PACKET_ID']['CAN_PACKET_SET_POS'] << 8), buffer, send_index)
     
     #Set origin mode
@@ -500,7 +501,7 @@ class CAN_Manager_servo(object):
         send_index = 0
         send_index1 = 0
         buffer=[]
-        self.buffer_append_int32(buffer, (pos * 10000.0), send_index)
+        self.buffer_append_int32(buffer, (pos * 10000.0))
         self.buffer_append_int16(buffer,spd, send_index1)
         self.buffer_append_int16(buffer,RPA, send_index1)
         self.send_servo_message(controller_id |(Servo_Params['CAN_PACKET_ID']['CAN_PACKET_SET_POS_SPD'] << 8), buffer, send_index)
@@ -861,7 +862,7 @@ class TMotorManager_servo_can():
         self._control_state = _TMotorManState_Servo.IDLE
 
     # used for either impedance or MIT mode to set output angle
-    def set_output_angle_radians(self, pos, vel, acc):
+    def set_output_angle_radians(self, pos, vel=None, acc=None):
         """
         Update the current command to the desired position, when in position or position-velocity mode.
         Note, this does not send a command, it updates the TMotorManager's saved command,
