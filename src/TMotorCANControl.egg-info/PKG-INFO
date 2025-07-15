@@ -2,7 +2,6 @@ Metadata-Version: 2.4
 Name: TMotorCANControl
 Version: 1.2.6
 Summary: A package to manage AK series T Motors over CAN
-Home-page: https://github.com/neurobionics/TMotorCANControl
 Author: Mitry Anderson, Vamsi Peddinti
 Author-email: mitryand@umich.edu
 Classifier: Programming Language :: Python :: 3

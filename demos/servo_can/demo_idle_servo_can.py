@@ -3,11 +3,11 @@ from NeuroLocoMiddleware.SoftRealtimeLoop import SoftRealtimeLoop
 #      from TMotorCANControl.TMotorManager import TMotorManager
 # except ModuleNotFoundError:
 from sys import path
-path.append("/home/pi/TMotorCANControl/src/")
+path.append("/home/hipexo/TMotorCANControl/src/")
 from TMotorCANControl.servo_can import TMotorManager_servo_can
 import time
 
-with TMotorManager_servo_can(motor_type='AK80-9', motor_ID=1) as dev:
+with TMotorManager_servo_can(motor_type='AK80-9', motor_ID=93, CSV_file="log.csv") as dev:
     
     loop = SoftRealtimeLoop(dt=0.1, report=True, fade=0.0)
     dev.enter_idle_mode()

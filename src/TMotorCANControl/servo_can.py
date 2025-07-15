@@ -425,6 +425,7 @@ class CAN_Manager_servo(object):
             current: current in Amps to use (-60 to 60)
         """
         buffer=[]
+        send_index = 0
         self.buffer_append_int32(buffer, np.int32(current * 1000.0))
         self.send_servo_message(controller_id|(Servo_Params['CAN_PACKET_ID']['CAN_PACKET_SET_CURRENT'] << 8), buffer, send_index)
 
@@ -698,8 +699,9 @@ class TMotorManager_servo_can():
             raise RuntimeError("Temperature greater than {}C for device: {}".format(self.max_temp, self.device_info_string()))
         # check that the motor data is recent
         now = time.time()
-        if (now - self._last_command_time) < 0.25 and ( (now - self._last_update_time) > 0.1):
-            warnings.warn("State update requested but no data from motor. Delay longer after zeroing, decrease frequency, or check connection. " + self.device_info_string(), RuntimeWarning)
+        if (now - self._last_command_time) < 0.5 and ( (now - self._last_update_time) > 0.5):
+            print("data issue")
+            # warnings.warn("State update requested but no data from motor. Delay longer after zeroing, decrease frequency, or check connection. " + self.device_info_string(), RuntimeWarning)
         else:
             self._command_sent = False
 

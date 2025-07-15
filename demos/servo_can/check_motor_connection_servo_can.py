@@ -1,3 +1,5 @@
+from sys import path
+# path.append("/home/hipexo/TMotorCANControl/src/")
 from TMotorCANControl.servo_can import TMotorManager_servo_can
 
 # CHANGE THESE TO MATCH YOUR DEVICE!

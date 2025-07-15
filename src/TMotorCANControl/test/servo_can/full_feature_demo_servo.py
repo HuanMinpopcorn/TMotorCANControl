@@ -8,14 +8,17 @@ import time
 #      from TMotorCANControl.TMotorManager import TMotorManager
 # except ModuleNotFoundError:
 from sys import path
-path.append("/home/pi/TMotorCANControl/src")
-from TMotorCANControl.mit_can import TMotorManager_servo
+path.append("/home/hipexo/TMotorCANControl/src")
+from TMotorCANControl.servo_can import TMotorManager_servo_can
+# from TMotorCANControl.mit_can import TMotorManager_servo
+# from TMotorCANControl.servo_can import TMotorManager_servo
 
 
 
 
-with TMotorManager_servo(motor_type='AK80-9', motor_ID=3, CSV_file=None) as dev:
-    dev.zero_position() 
+
+with TMotorManager_servo_can(motor_type='AK80-9', motor_ID=1, CSV_file=None) as dev:
+    dev.set_zero_position() 
     time.sleep(1.2) # Wait to finish zeroing!
     chirp_slow = Chirp(250, 200, 1)
     loop = SoftRealtimeLoop(dt = 0.001, report=True, fade=0)
@@ -23,8 +26,8 @@ with TMotorManager_servo(motor_type='AK80-9', motor_ID=3, CSV_file=None) as dev:
     
     # start in current mode
     state = 0
-    dev.set_current_gains() 
-    
+    # dev.set_current_gains() 
+    dev.enter_current_control()
     delta = 5
     t_next=delta
     print("(1 of 8) Setting torque to 0.0 Nm")

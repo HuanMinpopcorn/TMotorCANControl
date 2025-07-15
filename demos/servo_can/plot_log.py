@@ -32,12 +32,12 @@ with open("logs.csv",'r') as fd:
             velocity.append(float(row[2]))
             acceleration.append(float(row[3]))
             current.append(float(row[4]))
-            torque.append(float(row[5]))
+            # torque.append(float(row[5]))
             if motorside:
                 Mposition.append(float(row[6]))
                 Mvelocity.append(float(row[7]))
                 Macceleration.append(float(row[8]))
-                Mtorque.append(float(row[9]))
+                # Mtorque.append(float(row[9]))
         i += 1
 
 # plot the data, and label the figures
@@ -87,17 +87,17 @@ if save_figures:
     plt.savefig('plots/current.png')
 plt.clf()
 
-plt.plot(time,torque,label="τ")
-if motorside:
-    plt.plot(time,Mtorque,label="τm")
-plt.title('Torque vs Time')
-plt.ylabel('Torque [Nm]')
-plt.xlabel('Time [s]')
-plt.legend()
-plt.show()
-if save_figures:
-    plt.savefig('plots/torque.png')
-plt.clf()
+# plt.plot(time,torque,label="τ")
+# if motorside:
+#     plt.plot(time,Mtorque,label="τm")
+# plt.title('Torque vs Time')
+# plt.ylabel('Torque [Nm]')
+# plt.xlabel('Time [s]')
+# plt.legend()
+# plt.show()
+# if save_figures:
+#     plt.savefig('plots/torque.png')
+# plt.clf()
 
 # You could also print out some sample statistics
 print("Average current: " + str(np.average(current)))
