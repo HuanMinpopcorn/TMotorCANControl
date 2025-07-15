@@ -19,7 +19,7 @@ with TMotorManager_servo_can(motor_type='AK80-9', motor_ID=0) as dev:
     time.sleep(1)
     
     for t in loop:
-        Pdes = 3*np.sin(t)
+        Pdes = 0.3*np.sin(t)
         cmd =  P*(dev.position - Pdes) + D*(Vdes - dev.velocity)
         dev.current_qaxis = cmd
         dev.update()

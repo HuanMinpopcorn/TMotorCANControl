@@ -1,7 +1,7 @@
 from NeuroLocoMiddleware.SoftRealtimeLoop import SoftRealtimeLoop
 import time
 from sys import path
-path.append("/home/hipexo/TMotorCANControl/src/")
+# path.append("/home/hipexo/TMotorCANControl/src/")
 from TMotorCANControl.mit_can import TMotorManager_mit_can
 
 # CHANGE THESE TO MATCH YOUR DEVICE!
