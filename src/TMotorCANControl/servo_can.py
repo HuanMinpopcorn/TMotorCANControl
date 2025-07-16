@@ -68,6 +68,23 @@ Servo_Params = {
             'NUM_POLE_PAIRS': 21,
             'Use_derived_torque_constants': False, # true if you have a better model
         },
+        'AK70-10': {
+            'P_min': -32000,  # -3200 deg
+            'P_max':  32000,  # 3200 deg
+            'V_min': -100000,  # Electrical speed (rpm)
+            'V_max':  100000,
+            'Curr_min': -2320,  # Peak current 23.2A -> ADC = 2320 (0.01A units)
+            'Curr_max':  2320,
+            'T_min': -24.8,     # Peak torque
+            'T_max':  24.8,
+            'Kt_TMotor': 0.123,  # From datasheet: 0.123 Nm/A
+            'Current_Factor': 0.59,  # Still UNTESTED unless you recalibrate
+            'Kt_actual': 0.123,  # Replaced with official datasheet value
+            'GEAR_RATIO': 10.0,  # From datasheet
+            'NUM_POLE_PAIRS': 21,
+            'Use_derived_torque_constants': False
+        },
+
         'CAN_PACKET_ID':{
 
             'CAN_PACKET_SET_DUTY':0, #Motor runs in duty cycle mode
@@ -192,6 +209,7 @@ class motorListener(can.Listener):
 class CAN_Manager_servo(object):
     """A class to manage the low level CAN communication protocols"""
     debug = False
+    # debug = True
     """
     Set to true to display every message sent and recieved for debugging.
     """
@@ -522,10 +540,24 @@ class CAN_Manager_servo(object):
         Returns:
             A servo_motor_state object representing the state based on the data recieved.
         """
+        # print(data)
+        
+
         # using numpy to convert signed/unsigned integers
-        pos_int = np.int16(data[0] << 8 | data[1])
-        spd_int = np.int16(data[2] << 8 | data[3])
-        cur_int = np.int16(data[4] << 8 | data[5])
+        # pos_int = np.int16(data[0] << 8 | data[1] )
+        # spd_int = np.int16(data[2] << 8 | data[3] )
+        # cur_int = np.int16(data[4] << 8 | data[5] )
+        def to_int16(high, low):
+            raw = (high << 8) | low
+            return np.array([raw], dtype=np.uint16).astype(np.int16)[0]
+
+        pos_int = to_int16(data[0], data[1])
+        spd_int = to_int16(data[2], data[3])
+        cur_int = to_int16(data[4], data[5])
+        # pos_int = np.int16(((data[0] << 8) | data[1]) & 0xFFFF)
+        # spd_int = np.int16(((data[2] << 8) | data[3]) & 0xFFFF)
+        # cur_int = np.int16(((data[4] << 8) | data[5]) & 0xFFFF)
+
         motor_pos= float( pos_int * 0.1) # motor position
         motor_spd= float( spd_int * 10.0) # motor speed
         motor_cur= float( cur_int * 0.01) # motor current
@@ -540,6 +572,7 @@ class CAN_Manager_servo(object):
             print('  Error: ' + str(motor_error))
             
         return servo_motor_state(motor_pos, motor_spd,motor_cur,motor_temp, motor_error, 0)
+  
 
 
 # default variables to be logged
@@ -607,7 +640,8 @@ class TMotorManager_servo_can():
         self._control_state = _TMotorManState_Servo.IDLE
 
         self.radps_per_ERPM = 5.82E-04
-        self.rad_per_Eang = np.pi/Servo_Params[self.type]['NUM_POLE_PAIRS'] # 2*(np.pi/180)/(Servo_Params[self.type]['NUM_POLE_PAIRS'])
+        self.rad_per_Eang = np.pi/Servo_Params[self.type]['NUM_POLE_PAIRS'] 
+        # self.rad_per_Ea2*(np.pi/180)/(Servo_Params[self.type]['NUM_POLE_PAIRS'])
 
         self._entered = False
         self._start_time = time.time()
@@ -699,11 +733,13 @@ class TMotorManager_servo_can():
             raise RuntimeError("Temperature greater than {}C for device: {}".format(self.max_temp, self.device_info_string()))
         # check that the motor data is recent
         now = time.time()
-        if (now - self._last_command_time) < 0.5 and ( (now - self._last_update_time) > 0.5):
-            print("data issue")
-            # warnings.warn("State update requested but no data from motor. Delay longer after zeroing, decrease frequency, or check connection. " + self.device_info_string(), RuntimeWarning)
-        else:
-            self._command_sent = False
+        # if (now - self._last_command_time) < 0.5 and ( (now - self._last_update_time) > 0.5):
+        #     # print("data issue")
+        #     print("State update requested but no data from motor. Delay longer after zeroing, decrease frequency, or check connection. " + self.device_info_string())
+
+        #     # warnings.warn("State update requested but no data from motor. Delay longer after zeroing, decrease frequency, or check connection. " + self.device_info_string(), RuntimeWarning)
+        # else:
+        #     self._command_sent = False
 
         self._motor_state.set_state_obj(self._motor_state_async)
         self._motor_state.position = self._motor_state.position/Servo_Params[self.type]["GEAR_RATIO"]
@@ -864,7 +900,7 @@ class TMotorManager_servo_can():
         self._control_state = _TMotorManState_Servo.IDLE
 
     # used for either impedance or MIT mode to set output angle
-    def set_output_angle_radians(self, pos, vel=None, acc=None):
+    def set_output_angle_radians(self, pos=0, vel=0, acc=0):
         """
         Update the current command to the desired position, when in position or position-velocity mode.
         Note, this does not send a command, it updates the TMotorManager's saved command,

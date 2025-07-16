@@ -3,7 +3,7 @@ import struct
 import time
 
 channel = 'can0'
-motor_id = 1
+motor_id = 93
 bus = can.interface.Bus(channel=channel, bustype='socketcan')
 
 def parse_feedback(msg):
@@ -52,9 +52,9 @@ try:
         feedback = read_feedback()
         if feedback:
             pos, vel, cur, temp, err = feedback
-            print(f"Position: {pos:.1f} deg | Velocity: {vel:.1f} deg/s | Current: {cur:.2f} A | Temp: {temp} C | Error: {err}")
+            print(f"Position: {pos:.1f} deg | Velocity: {vel:.1f} deg/s | Current: {cur:.3f} A | Temp: {temp} C | Error: {err}")
 
-        send_velocity_command(velocity_deg_s=5.0)
+        # send_velocity_comsmand(velocity_deg_s=0.01)
         time.sleep(0.01)
 
 except KeyboardInterrupt:
