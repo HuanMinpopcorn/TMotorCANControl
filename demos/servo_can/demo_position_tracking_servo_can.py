@@ -7,6 +7,7 @@ import numpy as np
 import csv
 import matplotlib.pyplot as plt
 
+# [LOG]]changed the parameter for the motor and overflow for bites 
 # Create log containers
 log_data = {
     "time": [],
