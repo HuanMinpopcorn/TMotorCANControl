@@ -472,6 +472,7 @@ class CAN_Manager_servo(object):
             rpm: velocity in ERPM (-100000 to 100000)
         """
         buffer=[]
+        send_index = 0
         self.buffer_append_int32(buffer, np.int32(rpm))
         self.send_servo_message(controller_id| (Servo_Params['CAN_PACKET_ID']['CAN_PACKET_SET_RPM'] << 8), buffer, send_index)
     
