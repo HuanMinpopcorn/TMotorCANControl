@@ -1075,11 +1075,41 @@ class TMotorManager_servo_can():
             self.power_on()
             time.sleep(0.001)
         success = True
-        # time.sleep(0.1)
+        time.sleep(0.1)
         # for i in range(10):
         #     if Listener.get_message(timeout=0.1) is None:
         #         success = False
         # self._canman.notifier.remove_listener(Listener)
+        return success
+    # def check_can_connection(self):
+        """
+        Checks the motor's connection by attempting to send 10 startup messages.
+        If it gets replies, then the connection is confirmed.
+
+        Returns:
+            True if a connection is established, False otherwise.
+        """
+        if not self._entered:
+            raise RuntimeError("Tried to check_can_connection before entering motor control!")
+
+        listener = can.BufferedReader()
+        self._canman.notifier.add_listener(listener)
+
+        success = True
+        for i in range(10):
+            self.power_on()
+            time.sleep(0.01)
+
+        time.sleep(0.1)
+
+        # Check for at least one valid reply
+        for i in range(10):
+            msg = listener.get_message(timeout=0.1)
+            if msg is None or (msg.arbitration_id & 0xFF) != self.ID:
+                success = False
+                break
+
+        self._canman.notifier.remove_listener(listener)
         return success
 
     # controller variables
