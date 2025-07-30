@@ -9,13 +9,13 @@ import time
 import numpy as np
 
 
-with TMotorManager_servo_can(motor_type='AK80-9', motor_ID=93, CSV_file="logs.csv") as dev:
+with TMotorManager_servo_can(motor_type='AK70-10', motor_ID=1, CSV_file="logs.csv") as dev:
     dev.enter_position_control()
-    loop = SoftRealtimeLoop(dt=1, report=True, fade=0.0)
+    loop = SoftRealtimeLoop(dt=0.01, report=True, fade=0.0)
     dev.set_zero_position()
     
     for t in loop:
-        # dev.position = 1
-        dev._command.position = 0.1 
+        dev.position = 3.14159/100*2
+        # dev._command.position = 0.2
         dev.update()
         print("\r" + str(dev),end='')

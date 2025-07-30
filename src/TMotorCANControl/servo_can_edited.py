@@ -83,6 +83,7 @@ Servo_Params = {
             'NUM_POLE_PAIRS': 21,
             'Use_derived_torque_constants': False
         },
+
         'CAN_PACKET_ID':{
 
             'CAN_PACKET_SET_DUTY':0, #Motor runs in duty cycle mode
@@ -202,11 +203,13 @@ class motorListener(can.Listener):
         ID = msg.arbitration_id & 0x00000FF
         if ID == self.motor.ID:
             self.motor._update_state_async(self.canman.parse_servo_message(data))
+            return True
 
 # A class to manage the low level CAN communication protocols
 class CAN_Manager_servo(object):
     """A class to manage the low level CAN communication protocols"""
     debug = False
+    # debug = True
     """
     Set to true to display every message sent and recieved for debugging.
     """
@@ -363,7 +366,7 @@ class CAN_Manager_servo(object):
 
 #* Sends data via CAN
     # sends a message to the motor (when the motor is in Servo mode)
-    def send_servo_message(self, motor_id, data, data_len):
+    def send_servo_message(self, motor_id, data,data_len):
         """
         Sends a Servo Mode message to the motor, with a header of motor_id and data array of data
 
@@ -375,10 +378,10 @@ class CAN_Manager_servo(object):
         assert (DLC <= 8), ('Data too long in message for motor ' + str(motor_id))
         
         if self.debug:
-            print('ID: ' + str(hex(motor_id)) + '   Data: ' + '[{}]'.format(', '.join(hex(d) for d in data)))
-
+            print('ID: ' + str(hex(motor_id)) + '   Data: ' + '[{}]'.format(', '.join(hex(d) for d in data)) )
+        
         message = can.Message(arbitration_id=motor_id, data=data, is_extended_id=True)
-        # self.bus.send(message)
+
         try:
             self.bus.send(message)
             if self.debug:
@@ -440,6 +443,7 @@ class CAN_Manager_servo(object):
             current: current in Amps to use (-60 to 60)
         """
         buffer=[]
+        send_index = 0
         self.buffer_append_int32(buffer, np.int32(current * 1000.0))
         self.send_servo_message(controller_id|(Servo_Params['CAN_PACKET_ID']['CAN_PACKET_SET_CURRENT'] << 8), buffer, send_index)
 
@@ -468,7 +472,7 @@ class CAN_Manager_servo(object):
             rpm: velocity in ERPM (-100000 to 100000)
         """
         buffer=[]
-        send_index = np.int32(0)
+        send_index = 0
         self.buffer_append_int32(buffer, np.int32(rpm))
         self.send_servo_message(controller_id| (Servo_Params['CAN_PACKET_ID']['CAN_PACKET_SET_RPM'] << 8), buffer, send_index)
     
@@ -482,9 +486,9 @@ class CAN_Manager_servo(object):
             controller_id: CAN ID of the motor to send the message to
             pos: desired position in degrees
         """
-        send_index = np.int32(0)
+        
+        send_index = 0
         buffer=[]
-        # print(pos)
         self.buffer_append_int32(buffer, np.int32(pos * 1000000.0))
         self.send_servo_message(controller_id|(Servo_Params['CAN_PACKET_ID']['CAN_PACKET_SET_POS'] << 8), buffer, send_index)
     
@@ -518,7 +522,7 @@ class CAN_Manager_servo(object):
         send_index = 0
         send_index1 = 0
         buffer=[]
-        self.buffer_append_int32(buffer, (pos * 10000.0), send_index)
+        self.buffer_append_int32(buffer, (pos * 10000.0))
         self.buffer_append_int16(buffer,spd, send_index1)
         self.buffer_append_int16(buffer,RPA, send_index1)
         self.send_servo_message(controller_id |(Servo_Params['CAN_PACKET_ID']['CAN_PACKET_SET_POS_SPD'] << 8), buffer, send_index)
@@ -538,10 +542,24 @@ class CAN_Manager_servo(object):
         Returns:
             A servo_motor_state object representing the state based on the data recieved.
         """
+    
+        
+
         # using numpy to convert signed/unsigned integers
-        pos_int = np.int16(data[0] << 8 | data[1])
-        spd_int = np.int16(data[2] << 8 | data[3])
-        cur_int = np.int16(data[4] << 8 | data[5])
+        pos_int = np.int16(data[0] << 8 | data[1] )
+        spd_int = np.int16(data[2] << 8 | data[3] )
+        cur_int = np.int16(data[4] << 8 | data[5] )
+        # def to_int16(high, low):
+        #     raw = (high << 8) | low
+        #     return np.array([raw], dtype=np.uint16).astype(np.int16)[0]
+
+        # pos_int = to_int16(data[0], data[1])
+        # spd_int = to_int16(data[2], data[3])
+        # cur_int = to_int16(data[4], data[5])
+        # pos_int = np.int16(((data[0] << 8) | data[1]) & 0xFFFF)
+        # spd_int = np.int16(((data[2] << 8) | data[3]) & 0xFFFF)
+        # cur_int = np.int16(((data[4] << 8) | data[5]) & 0xFFFF)
+
         motor_pos= float( pos_int * 0.1) # motor position
         motor_spd= float( spd_int * 10.0) # motor speed
         motor_cur= float( cur_int * 0.01) # motor current
@@ -556,6 +574,7 @@ class CAN_Manager_servo(object):
             print('  Error: ' + str(motor_error))
             
         return servo_motor_state(motor_pos, motor_spd,motor_cur,motor_temp, motor_error, 0)
+  
 
 
 # default variables to be logged
@@ -623,9 +642,9 @@ class TMotorManager_servo_can():
         self._control_state = _TMotorManState_Servo.IDLE
 
         self.radps_per_ERPM = 5.82E-04
-        # self.radps_per_ERPM = 2 * np.pi / 60 / Servo_Params[self.type]['NUM_POLE_PAIRS'] # convert from electrical RPM to rad/s
-        self.rad_per_Eang = (np.pi / 180) # convert from degrees to radians
-        # self.rad_per_Eang = np.pi/Servo_Params[self.type]['NUM_POLE_PAIRS'] # 2*(np.pi/180)/(Servo_Params[self.type]['NUM_POLE_PAIRS'])
+        self.rad_per_Eang = np.pi/Servo_Params[self.type]['NUM_POLE_PAIRS'] 
+        # self.rad_per_Ea2*(np.pi/180)/(Servo_Params[self.type]['NUM_POLE_PAIRS'])
+        # self.rad_per_Eang =.1 # previoud is wrong
 
         self._entered = False
         self._start_time = time.time()
@@ -717,14 +736,17 @@ class TMotorManager_servo_can():
             raise RuntimeError("Temperature greater than {}C for device: {}".format(self.max_temp, self.device_info_string()))
         # check that the motor data is recent
         now = time.time()
-        if (now - self._last_command_time) < 0.25 and ( (now - self._last_update_time) > 0.1):
-            warnings.warn("State update requested but no data from motor. Delay longer after zeroing, decrease frequency, or check connection. " + self.device_info_string(), RuntimeWarning)
-        else:
-            self._command_sent = False
+        # if (now - self._last_command_time) < 0.5 and ( (now - self._last_update_time) > 0.5):
+        #     # print("data issue")
+        #     print("State update requested but no data from motor. Delay longer after zeroing, decrease frequency, or check connection. " + self.device_info_string())
+
+        #     # warnings.warn("State update requested but no data from motor. Delay longer after zeroing, decrease frequency, or check connection. " + self.device_info_string(), RuntimeWarning)
+        # else:
+        #     self._command_sent = False
 
         self._motor_state.set_state_obj(self._motor_state_async)
-        # self._motor_state.position = self._motor_state.position/Servo_Params[self.type]["GEAR_RATIO"]
-        # self._motor_state.position = self._motor_state.position / 100
+        self._motor_state.position = self._motor_state.position/Servo_Params[self.type]["GEAR_RATIO"]
+      
         # send current motor command
         self._send_command()
 
@@ -815,7 +837,8 @@ class TMotorManager_servo_can():
         Returns:
             The most recently updated output angle in radians
         """
-        return self._motor_state.position * self.rad_per_Eang
+        return np.radians(self._motor_state.position)
+        # return self._motor_state.position*self.rad_per_Eang
 
     def get_output_velocity_radians_per_second(self):
         """
@@ -895,9 +918,13 @@ class TMotorManager_servo_can():
         if np.abs(pos) >= Servo_Params[self.type]["P_max"]:
             raise RuntimeError("Cannot control using impedance mode for angles with magnitude greater than " + str(Servo_Params[self.type]["P_max"]) + "rad!")
         
-        pos = (pos / self.rad_per_Eang) / 100
-        vel = (vel / self.radps_per_ERPM) 
-        acc = (acc / self.radps_per_ERPM)
+        # pos = (pos / self.rad_per_Eang)
+        # vel = (vel / self.radps_per_ERPM)
+        # acc = (acc / self.radps_per_ERPM)
+        pos = np.degrees(pos)
+        vel = np.degrees(vel)
+        acc = np.degrees(acc)
+        # print(pos)
         if self._control_state == _TMotorManState_Servo.POSITION_VELOCITY:
             self._command.position = pos
             self._command.velocity = vel
@@ -1049,18 +1076,32 @@ class TMotorManager_servo_can():
         """
         if not self._entered:
             raise RuntimeError("Tried to check_can_connection before entering motor control! Enter control using the __enter__ method, or instantiating the TMotorManager in a with block.")
-        Listener = can.BufferedReader()
-        self._canman.notifier.add_listener(Listener)
-        for i in range(10):
-            self.power_on()
-            time.sleep(0.001)
-        success = True
-        # time.sleep(0.1)
-        # for i in range(10):
-        #     if Listener.get_message(timeout=0.1) is None:
-        #         success = False
-        # self._canman.notifier.remove_listener(Listener)
-        return success
+  
+        listener = can.BufferedReader()
+        self._canman.notifier.add_listener(listener)
+        # sucess = False
+        try:
+            # Send startup/ping messages to the motor
+            for _ in range(10):
+                self.power_on()
+                time.sleep(0.001)  # Slight delay between messages
+
+            # Wait briefly for responses to accumulate
+            time.sleep(0.1)
+
+            success_count = 0
+            for _ in range(10):
+                msg = listener.get_message(timeout=0.1)
+                ID = msg.arbitration_id & 0x00000FF
+                if ID == self.ID:
+                    success_count += 1
+
+            return success_count > 1 # you received at least one message from 10 data 
+
+        finally:
+            self._canman.notifier.remove_listener(listener)
+
+            return success_count > 1
 
     # controller variables
     temperature = property(get_temperature_celsius, doc="temperature_degrees_C")
@@ -1108,4 +1149,5 @@ class TMotorManager_servo_can():
 
     torque_motorside = property(get_motor_torque_newton_meters, set_motor_torque_newton_meters, doc="motor_torque_newton_meters")
     """Motor-side torque in Nm"""
+
 

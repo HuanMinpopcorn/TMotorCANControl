@@ -3,7 +3,9 @@ from NeuroLocoMiddleware.SoftRealtimeLoop import SoftRealtimeLoop
 #      from TMotorCANControl.TMotorManager import TMotorManager
 # except ModuleNotFoundError:
 from sys import path
-path.append("/home/pi/TMotorCANControl/src/")
+# path.append("/home/pi/TMotorCANControl/src/")
+path.append("/home/hipexo/HipExo/TMotorCANControl/src/")
+
 from TMotorCANControl.CAN_manager_servo import CAN_Manager_servo
 import time
 
